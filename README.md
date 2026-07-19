@@ -6,6 +6,8 @@ Oppora AI is an AI-powered platform that helps students discover, track, and man
 
 Built with **Next.js 16 (App Router)**, **Supabase** (PostgreSQL, Auth, Storage, Row Level Security), and **Google Gemini** for AI features.
 
+
+https://oppora-ai.vercel.app/
 ---
 
 ## Table of Contents
