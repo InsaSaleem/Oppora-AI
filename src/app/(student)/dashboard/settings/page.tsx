@@ -1,0 +1,237 @@
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import { Settings, Save, CheckCircle2, AlertTriangle, User } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+
+interface ProfileData {
+  name: string;
+  bio: string;
+  university: string;
+  degree: string;
+  semester: string;
+  cgpa: string;
+  skills: string;
+  linkedin_url: string;
+  github_url: string;
+  portfolio_url: string;
+}
+
+const EMPTY_PROFILE: ProfileData = {
+  name: "",
+  bio: "",
+  university: "",
+  degree: "",
+  semester: "",
+  cgpa: "",
+  skills: "",
+  linkedin_url: "",
+  github_url: "",
+  portfolio_url: "",
+};
+
+export default function SettingsPage() {
+  const supabase = createClient();
+  const [profile, setProfile] = useState<ProfileData>(EMPTY_PROFILE);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  const fetchProfile = useCallback(async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+
+    const [{ data: userRow }, { data: profileRow }] = await Promise.all([
+      supabase.from("users").select("name, bio").eq("id", user.id).single(),
+      supabase.from("profiles").select("*").eq("user_id", user.id).single(),
+    ]);
+
+    setProfile({
+      name: userRow?.name ?? "",
+      bio: userRow?.bio ?? "",
+      university: profileRow?.university ?? "",
+      degree: profileRow?.degree ?? "",
+      semester: profileRow?.semester?.toString() ?? "",
+      cgpa: profileRow?.cgpa?.toString() ?? "",
+      skills: (profileRow?.skills ?? []).join(", "),
+      linkedin_url: profileRow?.linkedin_url ?? "",
+      github_url: profileRow?.github_url ?? "",
+      portfolio_url: profileRow?.portfolio_url ?? "",
+    });
+    setLoading(false);
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  function handleChange(field: keyof ProfileData) {
+    return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setProfile((prev) => ({ ...prev, [field]: e.target.value }));
+      setFeedback(null);
+    };
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setFeedback(null);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setSaving(false); return; }
+
+    // Update users table
+    const { error: userError } = await supabase
+      .from("users")
+      .update({ name: profile.name.trim(), bio: profile.bio.trim() || null })
+      .eq("id", user.id);
+
+    // Update profiles table
+    const skillsArray = profile.skills
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .upsert({
+        user_id: user.id,
+        university: profile.university.trim() || null,
+        degree: profile.degree.trim() || null,
+        semester: profile.semester ? parseInt(profile.semester, 10) : null,
+        cgpa: profile.cgpa ? parseFloat(profile.cgpa) : null,
+        skills: skillsArray.length > 0 ? skillsArray : null,
+        linkedin_url: profile.linkedin_url.trim() || null,
+        github_url: profile.github_url.trim() || null,
+        portfolio_url: profile.portfolio_url.trim() || null,
+      }, { onConflict: "user_id" });
+
+    setSaving(false);
+
+    if (userError || profileError) {
+      setFeedback({ type: "error", message: userError?.message || profileError?.message || "Save failed." });
+    } else {
+      setFeedback({ type: "success", message: "Profile updated successfully!" });
+    }
+  }
+
+  const inputClass =
+    "w-full rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-0)] px-3 py-2 text-[13px] text-[var(--text-primary)] outline-none focus:border-[var(--fill-accent)] placeholder:text-[var(--text-muted)]";
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--fill-accent)] border-t-transparent" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl">
+      <div className="flex items-center gap-2 mb-5">
+        <Settings size={18} className="text-[var(--text-accent)]" />
+        <h2 className="text-[18px] font-semibold text-[var(--text-primary)]">Settings</h2>
+      </div>
+
+      <form onSubmit={handleSave} className="flex flex-col gap-6">
+        {/* Personal info section */}
+        <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-1)] p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <User size={15} className="text-[var(--text-secondary)]" />
+            <h3 className="text-[14px] font-medium text-[var(--text-primary)]">Personal Information</h3>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-[12px] font-medium text-[var(--text-secondary)]">Full Name</label>
+              <input type="text" value={profile.name} onChange={handleChange("name")} className={inputClass} placeholder="John Doe" />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1.5 block text-[12px] font-medium text-[var(--text-secondary)]">Bio</label>
+              <textarea
+                value={profile.bio}
+                onChange={handleChange("bio")}
+                rows={3}
+                className={inputClass + " resize-none"}
+                placeholder="Tell us about yourself..."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Academic info */}
+        <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-1)] p-5">
+          <h3 className="text-[14px] font-medium text-[var(--text-primary)] mb-4">Academic Information</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-[12px] font-medium text-[var(--text-secondary)]">University</label>
+              <input type="text" value={profile.university} onChange={handleChange("university")} className={inputClass} placeholder="MIT" />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[12px] font-medium text-[var(--text-secondary)]">Degree</label>
+              <input type="text" value={profile.degree} onChange={handleChange("degree")} className={inputClass} placeholder="B.S. Computer Science" />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[12px] font-medium text-[var(--text-secondary)]">Semester</label>
+              <input type="number" value={profile.semester} onChange={handleChange("semester")} className={inputClass} placeholder="4" />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[12px] font-medium text-[var(--text-secondary)]">CGPA</label>
+              <input type="text" value={profile.cgpa} onChange={handleChange("cgpa")} className={inputClass} placeholder="3.85" />
+            </div>
+          </div>
+        </div>
+
+        {/* Skills */}
+        <div className="rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface-1)] p-5">
+          <h3 className="text-[14px] font-medium text-[var(--text-primary)] mb-4">Skills &amp; Links</h3>
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="mb-1.5 block text-[12px] font-medium text-[var(--text-secondary)]">Skills (comma-separated)</label>
+              <input type="text" value={profile.skills} onChange={handleChange("skills")} className={inputClass} placeholder="React, Python, Machine Learning" />
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <label className="mb-1.5 block text-[12px] font-medium text-[var(--text-secondary)]">LinkedIn</label>
+                <input type="url" value={profile.linkedin_url} onChange={handleChange("linkedin_url")} className={inputClass} placeholder="https://linkedin.com/in/..." />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[12px] font-medium text-[var(--text-secondary)]">GitHub</label>
+                <input type="url" value={profile.github_url} onChange={handleChange("github_url")} className={inputClass} placeholder="https://github.com/..." />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[12px] font-medium text-[var(--text-secondary)]">Portfolio</label>
+                <input type="url" value={profile.portfolio_url} onChange={handleChange("portfolio_url")} className={inputClass} placeholder="https://..." />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Feedback */}
+        {feedback && (
+          <div className={`flex items-center gap-2 rounded-[var(--radius-sm)] px-4 py-2.5 text-[13px] font-medium ${
+            feedback.type === "success"
+              ? "bg-[var(--bg-success)] text-[var(--text-success)]"
+              : "bg-[var(--bg-danger)] text-[var(--text-danger)]"
+          }`}>
+            {feedback.type === "success" ? <CheckCircle2 size={15} /> : <AlertTriangle size={15} />}
+            {feedback.message}
+          </div>
+        )}
+
+        {/* Save button */}
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--fill-accent)] px-5 py-2.5 text-[13px] font-medium text-[var(--on-accent)] transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            <Save size={14} />
+            {saving ? "Saving..." : "Save changes"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}

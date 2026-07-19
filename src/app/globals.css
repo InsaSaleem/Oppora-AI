@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+:root {
+  --radius: 14px;
+  --radius-sm: 10px;
+
+  /* Light mode */
+  --bg-base: #f7f7f8;
+  --surface-0: #ffffff;
+  --surface-1: #ffffff;
+  --border: rgba(15, 15, 20, 0.08);
+
+  --text-primary: #14141a;
+  --text-secondary: #55555f;
+  --text-muted: #8a8a94;
+  --on-accent: #ffffff;
+
+  --fill-accent: #4f46e5;
+  --text-accent: #4f46e5;
+  --bg-accent: rgba(79, 70, 229, 0.1);
+
+  --fill-control: #eeeef1;
+
+  --text-success: #15803d;
+  --bg-success: rgba(21, 128, 61, 0.1);
+  --text-warning: #b45309;
+  --bg-warning: rgba(180, 83, 9, 0.1);
+  --text-danger: #b91c1c;
+  --bg-danger: rgba(185, 28, 28, 0.1);
+  --text-pro: #7c3aed;
+  --bg-pro: rgba(124, 58, 237, 0.1);
+}
+
+.dark {
+  --bg-base: #0b0b0f;
+  --surface-0: #0f0f14;
+  --surface-1: #16161d;
+  --border: rgba(255, 255, 255, 0.08);
+
+  --text-primary: #f2f2f5;
+  --text-secondary: #a6a6b0;
+  --text-muted: #6f6f7a;
+  --on-accent: #ffffff;
+
+  --fill-accent: #6366f1;
+  --text-accent: #818cf8;
+  --bg-accent: rgba(99, 102, 241, 0.16);
+
+  --fill-control: #1f1f28;
+
+  --text-success: #4ade80;
+  --bg-success: rgba(74, 222, 128, 0.12);
+  --text-warning: #fbbf24;
+  --bg-warning: rgba(251, 191, 36, 0.12);
+  --text-danger: #f87171;
+  --bg-danger: rgba(248, 113, 113, 0.12);
+  --text-pro: #c4b5fd;
+  --bg-pro: rgba(196, 181, 253, 0.14);
+}
+
+@theme inline {
+  --color-bg-base: var(--bg-base);
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-border: var(--border);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--fill-accent);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "tnum" 1, "cv11" 1;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+* {
+  border-color: var(--border);
+}
