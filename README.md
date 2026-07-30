@@ -238,9 +238,3 @@ These are standalone TypeScript scripts (not part of the Next.js app) for inspec
 
 ---
 
-## Known Issues / Roadmap
-
-- **`mentorship_requests.mentor_id` foreign key** currently points to `users.id`, while `mentor_students` and `mentor_feedback` correctly point to `mentors.id`. `src/lib/mentor.ts` documents and works around this, but the underlying FK should be migrated to reference `mentors.id` directly for consistency and to guarantee requests can only target approved mentors.
-- Admin analytics dashboards (charts for application status, activity logs, mentorship progress) are not yet implemented — Recharts is installed and ready.
-- Stripe billing/subscription flow is scaffolded (schema + dependency installed) but not yet wired up end-to-end.
-- Full opportunity CRUD (admin create/edit forms) is partially implemented — see `/admin/opportunities`.
