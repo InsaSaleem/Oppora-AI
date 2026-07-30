@@ -31,14 +31,25 @@ export default function MentorshipRequestsPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
 
-    console.log("Fetching requests for Mentor ID:", user.id);
+    const mentorRowId = await getMentorRowId(supabase, user.id);
+    if (!mentorRowId) {
+      console.error("No mentors row found for user_id:", user.id);
+      setLoading(false);
+      return;
+    }
+
+    console.log("Fetching requests for mentors.id:", mentorRowId);
+
+
 
     const response = await supabase
       .from("mentorship_requests")
-      .select("id, student_id, status, created_at, users!mentorship_requests_student_id_fkey(name, email, bio)")
-      .eq("mentor_id", user.id)
+      .select("id, student_id, status, created_at, users(name, email, bio)")
+      .eq("mentor_id", mentorRowId)
       .eq("status", "pending")
       .order("created_at", { ascending: false });
+
+ 
 
     console.log("Mentor requests fetch response:");
     console.log("- Data:", response.data);

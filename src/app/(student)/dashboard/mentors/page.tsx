@@ -10,7 +10,7 @@ interface MentorUser {
   id: string;
   name: string;
   bio: string | null;
-  mentors?: { specialization: string | null; organization: string | null } | { specialization: string | null; organization: string | null }[] | null;
+  mentors?: { id: string; specialization: string | null; organization: string | null } | { id: string; specialization: string | null; organization: string | null }[] | null;
 }
 
 export default function BrowseMentorsPage() {
@@ -28,7 +28,7 @@ export default function BrowseMentorsPage() {
     if (!user) { setLoading(false); return; }
 
     const [mentorResponse, requestResponse, activeResponse] = await Promise.all([
-      supabase.from("users").select("id, name, bio, mentors!mentors_user_id_fkey(specialization, organization)").eq("role", "mentor"),
+      supabase.from("users").select("id, name, bio, mentors!mentors_user_id_fkey(id, specialization, organization)").eq("role", "mentor"),
       supabase.from("mentorship_requests").select("mentor_id, status").eq("student_id", user.id),
       supabase.from("mentor_students").select("mentor_id, status").eq("student_id", user.id),
     ]);
@@ -141,11 +141,12 @@ export default function BrowseMentorsPage() {
       {!loading && mentors.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {mentors.map((mentor) => {
-            const status = requestStatus[mentor.id];
-            const isRequesting = requestingId === mentor.id;
-            
             // Handle array or object from Supabase join
             const mentorDetails = Array.isArray(mentor.mentors) ? mentor.mentors[0] : mentor.mentors;
+            const mentorRowId = mentorDetails?.id;
+            const status = mentorRowId ? requestStatus[mentorRowId] : undefined;
+            const isRequesting = requestingId === mentorRowId;
+
             const specialization = mentorDetails?.specialization ?? "Professional Mentor";
             const organization = mentorDetails?.organization;
 
@@ -185,9 +186,14 @@ export default function BrowseMentorsPage() {
                       <AlertTriangle size={16} />
                       Request Declined
                     </div>
+                  ) : !mentorRowId ? (
+                    <div className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[var(--fill-control)] px-4 py-2 text-[13px] font-medium text-[var(--text-muted)]">
+                      <AlertTriangle size={16} />
+                      Mentor profile incomplete
+                    </div>
                   ) : (
                     <button
-                      onClick={() => handleRequest(mentor.id)}
+                      onClick={() => handleRequest(mentorRowId)}
                       disabled={isRequesting}
                       className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[var(--fill-accent)] px-4 py-2 text-[13px] font-medium text-[var(--on-accent)] transition-opacity hover:opacity-90 disabled:opacity-60"
                     >

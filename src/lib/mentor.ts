@@ -1,11 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * mentor_students.mentor_id and mentor_feedback.mentor_id are foreign keys
- * to mentors.id — NOT to the mentor's auth/users id. (mentorship_requests.mentor_id
- * is the one table where mentor_id IS the auth id, which is what makes this
- * confusing.) Always resolve the real mentors.id through this helper before
- * touching mentor_students or mentor_feedback.
+ * mentor_students.mentor_id, mentor_feedback.mentor_id, and (after
+ * supabase/fix-mentorship-requests-fk.sql) mentorship_requests.mentor_id
+ * are all foreign keys to mentors.id — NOT to the mentor's auth/users id.
+ * Always resolve the real mentors.id through this helper before touching
+ * any of those three tables.
  *
  * Returns null if the logged-in user doesn't have a mentors row yet.
  */
