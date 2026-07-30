@@ -12,7 +12,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"student" | "mentor" | "admin">("student");
+  const [role, setRole] = useState<"student" | "mentor">("student");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -106,7 +106,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="flex gap-2">
-            {(["student", "mentor", "admin"] as const).map((r) => (
+            {(["student", "mentor"] as const).map((r) => (
               <button
                 type="button"
                 key={r}
